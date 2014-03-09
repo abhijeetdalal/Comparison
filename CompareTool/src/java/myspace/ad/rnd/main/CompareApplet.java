@@ -8,6 +8,7 @@ import java.util.LinkedList;
 
 import javax.swing.JApplet;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -16,8 +17,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 
-import myspace.ad.rnd.googlediff.diff_match_patch;
-import myspace.ad.rnd.googlediff.diff_match_patch.Diff;
+import myspace.ad.rnd.googlediff.Diff_Match_Patch;
+import myspace.ad.rnd.googlediff.Diff_Match_Patch.Diff;
 import myspace.ad.rnd.pdfbox.PDFBoxReader;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +30,12 @@ public class CompareApplet extends JApplet {
     private static final long serialVersionUID = -417287614858661228L;
 
     final JFileChooser fileChooser1 = new JFileChooser();
+    final JTextPane jTextPaneOutput = new JTextPane();
+    String fileType = "pdf";
 
+    /**
+     * Public constructor with all applet initialization code.
+     */
     public CompareApplet() {
 	this.getContentPane().setBounds(new Rectangle(0, 0, 800, 600));
 	this.getContentPane().setVisible(true);
@@ -39,36 +45,28 @@ public class CompareApplet extends JApplet {
 	jPanel.setBounds(new Rectangle(0, 0, 800, 600));
 	jPanel.setLayout(null);
 
-	JLabel jLabel1 = new JLabel("File 1");
-	jLabel1.setBounds(10, 10, 30, 20);
+	JLabel jLabelFile1 = new JLabel("File 1");
+	jLabelFile1.setBounds(10, 10, 30, 20);
 
-	JLabel jLabel2 = new JLabel("File 2");
-	jLabel2.setBounds(10, 40, 30, 20);
+	JLabel jLabelFile2 = new JLabel("File 2");
+	jLabelFile2.setBounds(10, 40, 30, 20);
 
-	final JTextField jTextField1 = new JTextField();
-	jTextField1.setBounds(50, 10, 400, 20);
+	final JTextField jTextFieldFile1 = new JTextField();
+	jTextFieldFile1.setBounds(50, 10, 400, 20);
 
-	final JTextField jTextField2 = new JTextField();
-	jTextField2.setBounds(50, 40, 400, 20);
+	final JTextField jTextFieldFile2 = new JTextField();
+	jTextFieldFile2.setBounds(50, 40, 400, 20);
 
-	final JTextPane jTextPane = new JTextPane();
-	jTextPane.setAutoscrolls(true);
-	jTextPane.setContentType("text/html");
+	jTextPaneOutput.setAutoscrolls(true);
+	jTextPaneOutput.setContentType("text/html");
 
-	JScrollPane jScrollPane = new JScrollPane(jTextPane);
-	jScrollPane.setBounds(50, 100, 700, 470);
+	JScrollPane jScrollPaneOutput = new JScrollPane(jTextPaneOutput);
+	jScrollPaneOutput.setBounds(50, 100, 700, 470);
 
-	/*
-	 * final JEditorPane jEditorPane = new JEditorPane();
-	 * jEditorPane.setBounds(50, 100, 700, 470);
-	 * jEditorPane.setAutoscrolls(true);
-	 * jEditorPane.setContentType("text/html");
-	 */
+	JButton jButtonFile1 = new JButton("Browse");
+	jButtonFile1.setBounds(460, 10, 80, 20);
 
-	JButton jButton1 = new JButton("Browse");
-	jButton1.setBounds(460, 10, 80, 20);
-
-	jButton1.addActionListener(new ActionListener() {
+	jButtonFile1.addActionListener(new ActionListener() {
 
 	    @Override
 	    public void actionPerformed(ActionEvent e) {
@@ -76,14 +74,14 @@ public class CompareApplet extends JApplet {
 
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
 		    File file = fileChooser1.getSelectedFile();
-		    jTextField1.setText(file.getAbsolutePath());
+		    jTextFieldFile1.setText(file.getAbsolutePath());
 		}
 	    }
 	});
 
-	JButton jButton2 = new JButton("Browse");
-	jButton2.setBounds(460, 40, 80, 20);
-	jButton2.addActionListener(new ActionListener() {
+	JButton jButtonFile2 = new JButton("Browse");
+	jButtonFile2.setBounds(460, 40, 80, 20);
+	jButtonFile2.addActionListener(new ActionListener() {
 
 	    @Override
 	    public void actionPerformed(ActionEvent e) {
@@ -91,19 +89,33 @@ public class CompareApplet extends JApplet {
 
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
 		    File file = fileChooser1.getSelectedFile();
-		    jTextField2.setText(file.getAbsolutePath());
+		    jTextFieldFile2.setText(file.getAbsolutePath());
 		}
 	    }
 	});
 
-	JButton jButton3 = new JButton("Compare");
-	jButton3.setBounds(50, 70, 100, 20);
-	jButton3.addActionListener(new ActionListener() {
+	String[] fileTypes = { "pdf", "txt" };
+	JComboBox<String> jComboBoxFileType = new JComboBox<String>(fileTypes);
+	jComboBoxFileType.setBounds(550, 10, 80, 20);
+	jComboBoxFileType.addActionListener(new ActionListener() {
+
+	    @SuppressWarnings("unchecked")
+	    @Override
+	    public void actionPerformed(ActionEvent e) {
+		JComboBox<String> cb = (JComboBox<String>) e.getSource();
+		fileType = (String) cb.getSelectedItem();
+
+	    }
+	});
+
+	JButton jButtonCompare = new JButton("Compare");
+	jButtonCompare.setBounds(50, 70, 100, 20);
+	jButtonCompare.addActionListener(new ActionListener() {
 
 	    @Override
 	    public void actionPerformed(ActionEvent e) {
-		final String file1 = jTextField1.getText();
-		final String file2 = jTextField2.getText();
+		final String file1 = jTextFieldFile1.getText();
+		final String file2 = jTextFieldFile2.getText();
 		if (StringUtils.isBlank(file1)) {
 		    JOptionPane.showMessageDialog(jPanel,
 			    "File 1 cannot be empty");
@@ -114,43 +126,73 @@ public class CompareApplet extends JApplet {
 		}
 		if (StringUtils.isNotBlank(file1)
 			&& StringUtils.isNotBlank(file2)) {
-		    StringBuffer differenceHTML = new StringBuffer("<html>");
-		    differenceHTML.append(compareFiles(file1, file2));
-		    differenceHTML.append("</html>");
-		    System.out.println(differenceHTML);
-		    jTextPane.setText(differenceHTML.toString().replaceAll("<del",
-			    "<strike").replaceAll("</del>", "</strike>").replaceAll("&para;", "").replaceAll("<ins style=\"background:#e6ffe6;\">", "<span style=\"background:#e6ffe6;\"><u>").replaceAll("</ins>", "</span></u>"));
+		    doComparison(file1, file2);
 		}
 	    }
 	});
 
-	jPanel.add(jLabel1);
-	jPanel.add(jTextField1);
-	jPanel.add(jButton1);
-	jPanel.add(jLabel2);
-	jPanel.add(jTextField2);
-	jPanel.add(jButton2);
-	jPanel.add(jButton3);
-	jPanel.add(jScrollPane);
+	jPanel.add(jLabelFile1);
+	jPanel.add(jTextFieldFile1);
+	jPanel.add(jButtonFile1);
+	jPanel.add(jLabelFile2);
+	jPanel.add(jTextFieldFile2);
+	jPanel.add(jButtonFile2);
+	jPanel.add(jComboBoxFileType);
+	jPanel.add(jButtonCompare);
+	jPanel.add(jScrollPaneOutput);
 
 	this.getContentPane().add(jPanel);
 
     }
 
-    private String compareFiles(String file1, String file2) {
-	PDFBoxReader pdfBoxReader = new PDFBoxReader();
-
-	String textWithoutNewLines1 = pdfBoxReader.readFile(file1);
-	String textWithoutNewLines2 = pdfBoxReader.readFile(file2);
-
-	return getDifference(textWithoutNewLines1, textWithoutNewLines2);
+    /**
+     * Calls Comparison logic depending on file type selected.
+     * @param file1 (String).
+     * @param file2 (String).
+     */
+    private void doComparison(final String file1, final String file2) {
+	StringBuffer differenceHTML = new StringBuffer("<html>");
+	if (StringUtils.equalsIgnoreCase(fileType, "pdf")) {
+	    differenceHTML.append(comparePDFs(file1, file2));
+	} else {
+	    System.out.println("txt selected");
+	}
+	differenceHTML.append("</html>");
+	//System.out.println(differenceHTML);
+	jTextPaneOutput.setText(differenceHTML
+		.toString()
+		.replaceAll("<del", "<strike")
+		.replaceAll("</del>", "</strike>")
+		.replaceAll("&para;", "")
+		.replaceAll("<ins style=\"background:#e6ffe6;\">",
+			"<span style=\"background:#e6ffe6;\"><u>")
+		.replaceAll("</ins>", "</span></u>"));
     }
 
-    private String getDifference(String textWithoutNewLines1,
-	    String textWithoutNewLines2) {
-	diff_match_patch diff_match_patch = new diff_match_patch();
-	LinkedList<Diff> d = diff_match_patch.diff_main(textWithoutNewLines1,
-		textWithoutNewLines2);
+    /**
+     * Reads PDF's using PDFBox API and calls Comparison logic.
+     * @param file1 (String).
+     * @param file2 (String).
+     * @return difference String
+     */
+    private String comparePDFs(final String file1, final String file2) {
+	PDFBoxReader pdfBoxReader = new PDFBoxReader();
+
+	String file1Text = pdfBoxReader.readFile(file1);
+	String file2Text = pdfBoxReader.readFile(file2);
+
+	return getDifference(file1Text, file2Text);
+    }
+
+    /**
+     * Compares 2 strings using google API.
+     * @param file1Text (String).
+     * @param file2Text (String).
+     * @return converted difference string in HTML format
+     */
+    private String getDifference(String file1Text, String file2Text) {
+	Diff_Match_Patch diff_match_patch = new Diff_Match_Patch();
+	LinkedList<Diff> d = diff_match_patch.diff_main(file1Text, file2Text);
 	diff_match_patch.diff_cleanupSemantic(d);
 	return diff_match_patch.diff_prettyHtml(d);
     }
