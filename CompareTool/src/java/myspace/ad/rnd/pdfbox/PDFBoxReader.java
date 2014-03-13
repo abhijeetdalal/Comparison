@@ -2,6 +2,8 @@ package myspace.ad.rnd.pdfbox;
 
 import java.io.IOException;
 
+import myspace.ad.rnd.pdfbox.exception.PDFBoxReaderException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.util.PDFTextStripper;
@@ -12,20 +14,21 @@ public class PDFBoxReader {
      * Reads PDF documents and returns it as a string using PDFBox API.
      * @param fileName (String).
      * @return converted file into String
+     * @throws PDFBoxReaderException (PDFBoxReaderException thrown).
      */
-    public String readFile(String fileName) {
+    public String readFile(String fileName) throws PDFBoxReaderException {
+	if (StringUtils.isBlank(fileName)) {
+	    return StringUtils.EMPTY;
+	}
 	PDDocument pdDocument;
-	String textWithoutNewLines = StringUtils.EMPTY;
 	try {
 	    pdDocument = PDDocument.load(fileName);
 
 	    PDFTextStripper stripper = new PDFTextStripper();
-	    String text = stripper.getText(pdDocument);
+	    return stripper.getText(pdDocument);
 
-	    textWithoutNewLines = text;
 	} catch (IOException e) {
-	    e.printStackTrace();
+	    throw new PDFBoxReaderException(e);
 	}
-	return textWithoutNewLines;
     }
 }

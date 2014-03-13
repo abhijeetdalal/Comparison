@@ -20,6 +20,7 @@ import javax.swing.JTextPane;
 import myspace.ad.rnd.googlediff.Diff_Match_Patch;
 import myspace.ad.rnd.googlediff.Diff_Match_Patch.Diff;
 import myspace.ad.rnd.pdfbox.PDFBoxReader;
+import myspace.ad.rnd.pdfbox.exception.PDFBoxReaderException;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -126,7 +127,14 @@ public class CompareApplet extends JApplet {
 		}
 		if (StringUtils.isNotBlank(file1)
 			&& StringUtils.isNotBlank(file2)) {
-		    doComparison(file1, file2);
+		    try {
+			doComparison(file1, file2);
+		    } catch (PDFBoxReaderException e1) {
+			JOptionPane
+				.showMessageDialog(
+					jPanel,
+					"An error occurred while comparing files, please check input files or contact Tech.");
+		    }
 		}
 	    }
 	});
@@ -149,17 +157,18 @@ public class CompareApplet extends JApplet {
      * Calls Comparison logic depending on file type selected.
      * @param file1 (String).
      * @param file2 (String).
+     * @throws PDFBoxReaderException (PDFBoxReaderException thrown).
      */
-    private void doComparison(final String file1, final String file2) {
-	StringBuffer differenceHTML = new StringBuffer("<html>");
+    private void doComparison(final String file1, final String file2)
+	    throws PDFBoxReaderException {
+	StringBuffer differenceString = new StringBuffer("<html>");
 	if (StringUtils.equalsIgnoreCase(fileType, "pdf")) {
-	    differenceHTML.append(comparePDFs(file1, file2));
+	    differenceString.append(comparePDFs(file1, file2));
 	} else {
 	    System.out.println("txt selected");
 	}
-	differenceHTML.append("</html>");
-	//System.out.println(differenceHTML);
-	jTextPaneOutput.setText(differenceHTML
+	differenceString.append("</html>");
+	jTextPaneOutput.setText(differenceString
 		.toString()
 		.replaceAll("<del", "<strike")
 		.replaceAll("</del>", "</strike>")
@@ -174,8 +183,10 @@ public class CompareApplet extends JApplet {
      * @param file1 (String).
      * @param file2 (String).
      * @return difference String
+     * @throws PDFBoxReaderException (PDFBoxReaderException thrown).
      */
-    private String comparePDFs(final String file1, final String file2) {
+    private String comparePDFs(final String file1, final String file2)
+	    throws PDFBoxReaderException {
 	PDFBoxReader pdfBoxReader = new PDFBoxReader();
 
 	String file1Text = pdfBoxReader.readFile(file1);
@@ -185,7 +196,8 @@ public class CompareApplet extends JApplet {
     }
 
     /**
-     * Compares 2 strings using google API.
+     * Compares 2 strings using google API and returns difference in HTML
+     * format.
      * @param file1Text (String).
      * @param file2Text (String).
      * @return converted difference string in HTML format
